@@ -1,0 +1,78 @@
+⚠️ ATENÇÃO: Mantenha o contexto da aplicação atual. O projeto é um sistema de fidelidade da empresa **Six Dry Aged**, construído com **React + TypeScript + Firebase** no Replit.
+
+Todas as mudanças devem respeitar os princípios de:
+- Arquitetura de software limpa
+- Modularidade e separação de responsabilidades
+- Segurança e privacidade de dados
+- Reaproveitamento de código (sem duplicações)
+- Interface leve e responsiva com Tailwind
+
+---
+
+## 🧩 MELHORIAS E CORREÇÕES A IMPLEMENTAR
+
+---
+
+### ✅ [1] Corrigir "Invalid Date" nos cupons do painel admin
+- Local: botão “olho” → seção “Cupons”
+- Corrigir campo `criadoEm` para exibir data corretamente.
+- Solução: aplicar `.toDate().toLocaleDateString('pt-BR')`
+
+---
+
+### ✅ [2] Corrigir sugestão de cliente após seleção (na aba Registrar Compra)
+- Após selecionar um cliente, o dropdown de sugestões continua aparecendo.
+- Solução:
+  - Resetar o input
+  - Esconder a lista de sugestões (`setShowSuggestions(false)`)
+
+---
+
+### ✅ [3] Corrigir listagem de cupons na área do cliente
+- Problema: só aparece 1 cupom mesmo se houver mais.
+- Solução:
+  - Buscar todos os cupons com `usado: false`
+  - Exibir todos os cupons válidos usando `.map()`
+
+---
+
+### ✅ [4] Tornar a interface responsiva (painel admin + cliente)
+- Usar Tailwind para garantir que todos os componentes se adaptem ao mobile
+- Tabelas devem virar listas ou usar scroll horizontal (`overflow-x-auto`)
+
+---
+
+### ✅ [5] Mostrar “tempo restante” do cupom na interface do cliente
+- Além da validade (`validoAte`), mostrar algo como:
+  > "Faltam 12 dias"
+- Baseado na diferença entre `validoAte` e `Date.now()`
+
+---
+
+### ✅ [6] Criar gráficos no dashboard admin
+- Gráfico 1: Total de clientes que atingiram 10 carimbos por **semana**
+- Gráfico 2: Total de clientes que atingiram 10 carimbos por **mês**
+- Base dos dados: coleção `cupons`, usando `criadoEm`
+- Pode usar **Recharts** ou **Chart.js**
+- Layout deve ser leve, funcional e responsivo
+
+---
+
+### ✅ [7] Ocultar parcialmente o CPF na área do cliente
+- Exibir apenas os últimos dígitos do CPF para proteger a privacidade
+  - Exemplo: `***.123.456-78` ou `123.***.***-45`
+- No painel admin o CPF pode continuar completo
+
+---
+
+📁 Use corretamente os arquivos já existentes:
+- `/lib/firebase.ts`
+- `/lib/firebaseCupom.ts`
+- `/components/ui/AdminDashboard.tsx`
+- `/components/ui/ClientArea.tsx`
+
+🚫 Não duplique funções  
+✅ Reutilize o que já foi implementado  
+✅ Garanta que tudo continue funcionando sem regressão  
+✅ Verifique se o Firebase está corretamente conectado após as alterações
+

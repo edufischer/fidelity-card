@@ -1,0 +1,149 @@
+Mantenha o contexto da aplicação atual (sistema de fidelidade da Six Dry Aged, com Firebase e painel em React com TypeScript). Agora, implemente o sistema completo de cupons da seguinte forma:
+
+---
+
+## 🧩 Parte 1 – Geração automática de cupons ao atingir 10 carimbos
+
+Sempre que um cliente acumular 10 ou mais carimbos ao registrar uma compra, siga esta lógica:
+
+1. Crie automaticamente um novo cupom na coleção `cupons` do Firestore.
+2. O cupom deve conter os seguintes campos:
+   - clienteCpf (string)
+   - valorDesconto (number → 0.15)  
+   - usado (boolean → false)
+   - criadoEm (timestamp → use serverTimestamp())
+   - validoAte (timestamp → 30 dias a partir da data atual)
+3. Após salvar com sucesso o cupom, zere o número de carimbos do cliente.
+4. Mostre um `toast.success()` com a mensagem:  
+   **"🎉 Cliente atingiu 10 carimbos! Cupom de 15% gerado."**
+5. Para compras abaixo de 10 carimbos, mantenha o comportamento atual de apenas acumular carimbos.
+
+⚠️ OBS:  
+- A função `gerarCupom(clienteCpf: string)` já existe no arquivo `/lib/firebaseCupom.ts`
+- O código principal está no componente `AdminDashboard.tsx`
+
+---
+
+## 🧩 Parte 2 – Criar visualização de cupons no painel administrativo
+
+Adicione uma **nova aba ou seção chamada "Cupons"** no `AdminDashboard.tsx`, semelhante às abas de "Clientes" e "Compras". Nela, crie uma tabela que exibe todos os cupons salvos no Firestore.
+
+### Colunas da tabela:
+- **CPF** (`clienteCpf`)
+- **Data de criação** (`criadoEm` formatado dd/mm/yyyy)
+- **Validade até** (`validoAte` formatado dd/mm/yyyy)
+- **Status**: mostre como "Ativo" (verde) se `usado: false`, ou "Usado" (vermelho/cinza) se `usado: true`
+- **Ações**: botão "Marcar como usado" → ao clicar, atualiza o campo `usado` para `true` no Firestore
+
+### Requisitos:
+- Ordenar os cupons do mais recente para o mais antigo
+- Usar `useEffect` para buscar os cupons do Firestore
+- Adicionar uma pequena animação de loading enquanto carrega
+- Interface bonita, com Tailwind CSS, responsiva e alinhada com o restante do painel
+- O botão de "Marcar como usado" deve funcionar via update no Firestore
+
+### (Extra, se possível):
+- Campo de filtro por CPF acima da tabela, que filtra os cupons daquele cliente
+- Badge de cor para o status (verde para Ativo, cinza/vermelho para Usado)
+
+---
+
+## 🧩 Parte 3 – CORREÇÃO CRÍTICA: Erro na consulta de fidelidade
+
+**PROBLEMA IDENTIFICADO**: A página de consultar fidelidade está apresentando erro de índice no Firestore e retornando "cliente não encontrado" mesmo para CPFs válidos existentes no banco.
+
+### Correções necessárias:
+
+#### 3.1 - Verificar e corrigir a consulta no Firestore
+No arquivo onde está a função de consulta de cliente (provavelmente `/lib/firebase.ts` ou similar), **identifique e corrija** a query que busca clientes por CPF:
+
+```typescript
+// ❌ EVITAR queries complexas que precisam de índice
+// Se estiver usando algo como:
+// query(collection(db, "clientes"), where("cpf", "==", cpf), orderBy("criadoEm"))
+
+// ✅ USAR consulta simples por CPF apenas:
+const consultarClientePorCpf = async (cpf: string) => {
+  try {
+    const clientesRef = collection(db, "clientes");
+    const q = query(clientesRef, where("cpf", "==", cpf));
+    const querySnapshot = await getDocs(q);
+    
+    if (querySnapshot.empty) {
+      return null;
+    }
+    
+    const doc = querySnapshot.docs[0];
+    return { id: doc.id, ...doc.data() };
+  } catch (error) {
+    console.error("Erro ao consultar cliente:", error);
+    throw error;
+  }
+};
+```
+
+#### 3.2 - Criar índices necessários no Firestore (se realmente precisar de queries complexas)
+Se a aplicação precisar de queries com múltiplos filtros, **adicione estas instruções**:
+
+1. **Acesse o Console do Firebase** → Firestore Database → Indexes
+2. **Crie os índices necessários** conforme os campos que você está consultando
+3. **OU simplifique as queries** para usar apenas um campo por vez
+
+#### 3.3 - Implementar fallback e melhor tratamento de erros
+```typescript
+// Adicionar tratamento robusto na função de consulta
+const consultarFidelidade = async (cpf: string) => {
+  try {
+    // Limpar e formatar CPF
+    const cpfLimpo = cpf.replace(/\D/g, '');
+    
+    // Tentar busca exata primeiro
+    let cliente = await consultarClientePorCpf(cpfLimpo);
+    
+    // Se não encontrar, tentar busca alternativa
+    if (!cliente && cpfLimpo.length === 11) {
+      // Tentar com CPF formatado: 000.000.000-00
+      const cpfFormatado = cpfLimpo.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+      cliente = await consultarClientePorCpf(cpfFormatado);
+    }
+    
+    return cliente;
+  } catch (error) {
+    console.error("Erro na consulta de fidelidade:", error);
+    return null;
+  }
+};
+```
+
+#### 3.4 - Verificar componente de consulta
+No componente que renderiza a página de consulta de fidelidade:
+
+1. **Adicionar loading state** durante a consulta
+2. **Melhorar mensagens de erro** (ex: "CPF não encontrado", "Erro na consulta", etc.)
+3. **Validar formato do CPF** antes de enviar para o Firebase
+4. **Adicionar retry automático** em caso de erro temporário
+
+#### 3.5 - Debug e logs
+Adicione logs temporários para identificar onde está o problema:
+
+```typescript
+console.log("CPF digitado:", cpf);
+console.log("CPF formatado:", cpfLimpo);
+console.log("Resultado da consulta:", cliente);
+```
+
+---
+
+## 🧩 Instruções Finais
+
+✅ **Mantenha a arquitetura** do projeto como está (componentes bem organizados, Firebase centralizado, etc). Tudo precisa continuar funcionando normalmente após as mudanças.
+
+✅ **Use os arquivos e pastas existentes** corretamente, como `/components/ui/AdminDashboard.tsx`, `/lib/firebase.ts`, e `/lib/firebaseCupom.ts`.
+
+✅ **Não repita ou sobrescreva funções** que já existem — apenas evolua mantendo compatibilidade com o código atual.
+
+✅ **PRIORIZE a correção do erro de consulta** antes de implementar os cupons, pois isso está quebrado no momento.
+
+✅ **Teste a consulta de fidelidade** após as correções para garantir que CPFs válidos sejam encontrados corretamente.
+
+Execute as mudanças com cuidado e mantenha o painel estável, bonito e funcional. **Comece pela correção do erro de consulta**, depois implemente o sistema de cupons.

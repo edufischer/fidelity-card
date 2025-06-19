@@ -1,0 +1,91 @@
+Crie um projeto web completo no Replit chamado “Cartão Fidelidade – Six Dry Aged”, com as seguintes características:
+
+### 📦 Tecnologias:
+- Frontend: HTML, CSS (preferência por TailwindCSS), JavaScript (puro)
+- Backend: Firebase (Auth, Firestore, Realtime if needed)
+- Firebase SDK para autenticação e banco de dados
+- Replit como ambiente de desenvolvimento
+- Sem frameworks pesados (não usar React, Vue, etc.)
+
+---
+
+### 🧰 Estrutura de pastas:
+- `/admin` → Painel administrativo com login
+- `/cliente` → Página pública onde o cliente consulta carimbos e cupons
+- `/js`, `/css`, `/assets` → Scripts e estilos
+- `/firebase-config.js` → Configuração do Firebase
+
+---
+
+### 🔐 Firebase:
+Configure a autenticação com e-mail e senha para uso interno (atendentes/admins).  
+Utilize o Firestore com as seguintes coleções:
+
+**Coleção: clientes**
+- cpf (document ID)
+- telefone
+- email
+- nascimento
+- carimbosAtuais (int)
+- ultimaCompra (timestamp)
+
+**Coleção: compras**
+- id (doc ID auto)
+- cpfCliente
+- valorCompra
+- carimbosGerados
+- data (timestamp)
+
+**Coleção: cupons**
+- codigo (ex: SIX15-ABC123)
+- cpfCliente
+- status (válido ou usado)
+- criadoEm (timestamp)
+- validade (timestamp)
+
+---
+
+### 🧑‍💻 Funcionalidades do Painel Administrativo (/admin):
+
+✅ Login com Firebase  
+✅ Cadastro de cliente com validação de CPF (único)  
+✅ Registro de compra: CPF + valor → gera automaticamente carimbos (R$150 = 1 carimbo)  
+✅ Atualiza carimbos acumulados do cliente  
+✅ Quando carimbosAtuais >= 10, cria um cupom (código aleatório tipo SIX15-XYZ), validade de 7 dias  
+✅ Página com lista de clientes, histórico de compras e cupons gerados  
+✅ Botão para “usar cupom” (altera status para "usado" e zera carimbos do cliente)
+
+---
+
+### 👥 Funcionalidade do Painel do Cliente (/cliente):
+
+✅ Campo para digitar CPF  
+✅ Mostra total de carimbos acumulados  
+✅ Exibe status do cupom (se houver): código, validade, usado ou não  
+✅ Interface simples, bonita e responsiva
+
+---
+
+### 🧩 Detalhes técnicos:
+
+- Use Firebase Rules para permitir acesso somente autenticado às funções administrativas
+- Valide CPF com expressão regular
+- Use localStorage apenas se necessário para estado do frontend
+- Componentize os formulários e scripts JS (módulos separados para leitura/escrita no Firebase)
+- Utilize mensagens de feedback claras para erros ou ações bem-sucedidas
+- Gere cupom com validade de 7 dias (adicionando 7 dias ao timestamp da criação)
+- Use `Math.floor(valor / 150)` para cálculo de carimbos
+
+---
+
+### 🎨 Estilo:
+- Use TailwindCSS para visual leve, limpo e moderno
+- Cor base: preto e dourado (luxo), com fontes sóbrias
+- Interfaces separadas para admin e cliente, com layout responsivo
+
+---
+
+### 🎯 Objetivo final:
+Permitir que atendentes registrem manualmente compras dos clientes e que os próprios clientes consultem carimbos e cupons através do CPF, de forma segura e simples. O sistema deve ser facilmente expansível para, no futuro, integração com WhatsApp (via N8N) e envio automático de notificações.
+
+Gere o projeto com base nesse escopo e explique quais arquivos foram criados e como o Firebase está configurado.
